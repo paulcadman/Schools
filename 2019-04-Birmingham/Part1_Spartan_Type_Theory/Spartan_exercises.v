@@ -85,39 +85,97 @@ Definition exercise_1_6'' (A B:UU) (P:A -> UU) : (∑ x:A, B × P x) -> ∑ x:A,
 
 Theorem exercise_1_6 (A B:UU) (P:A → UU) : (∑ x:A, B × P x) → B × ∑ x:A, P x.
 Proof.
-  exact (λ s (exercise_1_6' s,,exercise_1_6'' s)).
+  exact (λ s, (exercise_1_6' A B P s,,exercise_1_6'' A B P s)).
 Qed.
 
 (** Exercise 1.7. B → (B → A) → A, given types A and B *)
 
 Theorem exercise_1_7 (A B : UU) : B → (B → A) → A.
-Proof. exact fill_me. Qed.
+Proof.
+  exact (λ b f, f b).
+Qed.
 
 (** Exercise 1.8. B → ∏ (A : Universe) (B → A) → A, given type B *)
 
 Theorem exercise_1_8 (B : UU) : B → ∏ A:UU, (B → A) → A.
-Proof. exact fill_me. Qed.
+Proof. exact (λ b, (λ _ f, f b)). Qed.
 
 (** Exercise 1.9. (∏ (A : Universe) (B → A) → A) → B, given type B *)
 
+Check idfun.
 Theorem exercise_1_9 (B : UU) : (∏ A:UU, (B → A) → A) → B.
-Proof. exact fill_me. Qed.
+Proof. exact (λ u, ((u B) (idfun B))). Qed.
 
 (** Exercise 2.1. Using the basic rules, construct addition on natural numbers. *)
 
-Definition nat_plus : nat → nat → nat := fill_me.
+Check nat_rect.
+
+Definition nat_plus : nat → nat → nat :=
+  λ n m, (nat_rect (λ _, nat)
+                   m
+                   (λ _, (λ k, S k )) n).
 
 (** Exercise 2.2. State associativity and commutativity of addition in a type-theoretic way. *)
 
-Definition exercise_2_2_assoc : UU := fill_me.
+Definition exercise_2_2_assoc : UU := (∏ n m k: nat, (nat_plus n
+                                                             (nat_plus m
+                                                                       k)
+                                                    =
+                                                    (nat_plus (nat_plus n
+                                                                        m)
+                                                              k))).
 
-Definition exercise_2_2_comm : UU := fill_me.
+Definition exercise_2_2_comm : UU := (∏ n m, (nat_plus n m = nat_plus m n)).
 
 (** Exercise 2.3. Establish associativity and commutativity of addition. What does this mean in type theory? *)
 
+
+Check idpath.
+
+Search (?A = ?A).
+
+About idpath.
+
+Lemma nat_plus_zero : (∏ n: nat, (nat_plus 0 n) = n).
+Proof.
+  intros.
+  simpl.
+  apply idpath.
+Qed.
+
+Lemma nat_plus_zero' : (∏ m k: nat, nat_plus 0 (nat_plus m k) =
+  nat_plus (nat_plus 0 m) k).
+Proof.
+  intros.
+  rewrite nat_plus_zero.
+  rewrite nat_plus_zero.
+  apply idpath.
+Qed.
+
+Check nat_rect.
+Check maponpaths.
+
+Search (_ = _).
+
+Lemma nat_plus_succ : (∏ n m: nat, nat_plus (S n) m = S (nat_plus n m)).
+Proof.
+  intros.
+  (* simpl *)
+  apply idpath.
+Qed.
+
+Lemma nat_assoc_step : (∏ n m k, (nat_plus n (nat_plus m k) = nat_plus (nat_plus n m) k) -> (nat_plus (S n) (nat_plus m k) = nat_plus (nat_plus (S n) m) k)).
+  intros.
+  apply (maponpaths succ X).
+Qed.
+
 Theorem nat_plus_is_assoc : exercise_2_2_assoc.
 Proof.
-  exact fill_me.
+  exact (λ n m k,
+         (nat_rect (λ n, (nat_plus n (nat_plus m k) = (nat_plus (nat_plus n m) k)))
+                  (nat_plus_zero' m k)
+                  (λ n p, (nat_assoc_step n m k p)))
+         n).
 Qed.
 
 Theorem nat_plus_is_comm : exercise_2_2_comm.
