@@ -8,8 +8,23 @@ Axiom fill_me : forall {X : UU}, X.
 
 (** Exercise 1.1. A × (B + C) → A × B + A × C, given types A, B, C *)
 
+Locate "×".
+Print dirprod.
+Search (dirprod).
+Search (coprod).
+Search (_ -> dirprod _ _).
+Search (dirprod _ _ -> _).
+Search (?A -> ?A).
+
+Print dirprod.
+
+Check coprod_rect.
+
 Definition exercise_1_1 (A B C : UU)
-  : A × (B ⨿ C) → (A × B) ⨿ (A × C) := fill_me.
+  : A × (B ⨿ C) → (A × B) ⨿ (A × C) :=
+  λ p, (coprod_rect (λ _, (A × B) ⨿ (A × C))
+              (λ b, ii1 (pr1 p,,b))
+              (λ c, ii2 (pr1 p,,c)))(pr2 p).
 
 (** Exercise 1.2. (A → A) → (A → A), given type A
 
@@ -17,28 +32,60 @@ Definition exercise_1_1 (A B C : UU)
 
 Definition exercise_1_2 (A : UU)
   : (A → A) → (A → A)
-  := fill_me.
+  := λ f, (λ a, (f a)).
 
 (** Exercise 1.3. Id_nat (0, succ 0) → empty *)
 
-Theorem exercise_1_3 : (0 = 1) → empty.
+Search (_ -> empty).
+Check nopathstruetofalse.
+Check nopathsfalsetotrue.
+
+Check nat_rect.
+Check maponpaths.
+Check transportf.
+
+Definition not_zero : nat -> bool :=
+  nat_rect (λ _, bool)
+           true
+           (λ _ _, false).
+
+Definition exercise_1_3 : (0 = 1) → empty :=
+  λ zeroIsNotOne, (nopathstruetofalse
+                     (maponpaths not_zero
+                                 zeroIsNotOne)).
+
+Theorem exercise_1_3' : (0 = 1) → empty.
 Proof.
-  exact fill_me.
+  intros.
+  apply (maponpaths not_zero) in X.
+  unfold not_zero in X.
+  compute in X.
+  apply nopathstruetofalse in X.
+  exact X.
 Qed.
 
 (** Exercise 1.4. ∑ (A : Universe) (A → empty) *)
 
 Theorem exercise_1_4 : ∑ A:UU, (A → empty).
 Proof.
-  exact fill_me.
+  exact ((0=1),,exercise_1_3).
 Qed.
 
 (** Exercise 1.6. (∑ (x : A) B × P x) → B × ∑ (x : A) P x,
                   given types A, B, and P : A → Universe *)
 
+Check pr1.
+Check pr2.
+
+Definition exercise_1_6' (A B:UU) (P:A -> UU) : (∑ x:A, B × P x) -> B :=
+  λ s, (pr1 (pr2 s)).
+
+Definition exercise_1_6'' (A B:UU) (P:A -> UU) : (∑ x:A, B × P x) -> ∑ x:A, P x :=
+  λ s, (pr1 s,,pr2 (pr2 s)).
+
 Theorem exercise_1_6 (A B:UU) (P:A → UU) : (∑ x:A, B × P x) → B × ∑ x:A, P x.
 Proof.
-  exact fill_me.
+  exact (λ s (exercise_1_6' s,,exercise_1_6'' s)).
 Qed.
 
 (** Exercise 1.7. B → (B → A) → A, given types A and B *)
