@@ -41,6 +41,33 @@ Require Import UniMath.Foundations.Preamble.
 Require Import UniMath.Foundations.PartA.
 Require Import UniMath.Foundations.NaturalNumbers.
 
+Check paths_rect.
+(* 1.    A × (B + C) → A × B + A × C, given types A, B, C *)
+
+Lemma ex_1_1 (A B C : UU) : A × (B ⨿ C) -> (A × B) ⨿ (A × C).
+Proof.
+  intro H.
+  induction H as [H1  H2].
+  induction H2 as [H3 | H4].
+  - apply ii1.
+    apply dirprodpair.
+    + exact H1.
+    + exact H3.
+  - apply ii2.
+    apply dirprodpair.
+    + exact H1.
+    + exact H4.
+Defined.
+
+Lemma ex_1_2 (A : UU) : (A -> A) -> (A -> A).
+Proof.
+  intros f a.
+  exact (f a).
+Defined.
+
+Print ex_1_1.
+
+Eval compute in ex_1_1.
 
 
 (** * Exercise 2
