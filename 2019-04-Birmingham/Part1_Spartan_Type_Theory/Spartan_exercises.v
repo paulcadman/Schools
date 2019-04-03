@@ -134,14 +134,51 @@ Check idpath.
 
 Search (?A = ?A).
 
-About idpath.
+Check idpath.
 
 Lemma nat_plus_zero : (∏ n: nat, (nat_plus 0 n) = n).
 Proof.
+  exact (λ n, idpath n).
+  (* intros. *)
+  (* (* simpl. *) *)
+  (* apply idpath. *)
+Defined.
+
+Eval compute in nat_plus_zero.
+
+Check nat_rect.
+
+Lemma nat_zero_zero : nat_plus 0 0 = 0.
+Proof.
+  apply idpath.
+Defined.
+
+Lemma nat_plus_succ : (∏ n m: nat, nat_plus (S n) m = S (nat_plus n m)).
+Proof.
   intros.
-  simpl.
+  (* simpl *)
   apply idpath.
 Qed.
+
+Eval compute in nat_zero_zero.
+
+Check idpath.
+
+Lemma nat_zero_plus_step : (∏ n : nat, nat_plus n 0 = n -> nat_plus (S n) 0 = (S n)).
+Proof.
+  intros.
+  rewrite nat_plus_succ.
+  apply (maponpaths succ).
+  exact X.
+Qed.
+
+Lemma nat_zero_plus : (∏ n : nat, (nat_plus n 0) = n).
+Proof.
+  exact (nat_rect (λ n, nat_plus n 0 = n)
+                  (idpath 0)
+                  nat_zero_plus_step
+        ).
+  Qed.
 
 Lemma nat_plus_zero' : (∏ m k: nat, nat_plus 0 (nat_plus m k) =
   nat_plus (nat_plus 0 m) k).
@@ -152,17 +189,12 @@ Proof.
   apply idpath.
 Qed.
 
-Check nat_rect.
+Print nat_plus_zero'.
+
 Check maponpaths.
 
 Search (_ = _).
 
-Lemma nat_plus_succ : (∏ n m: nat, nat_plus (S n) m = S (nat_plus n m)).
-Proof.
-  intros.
-  (* simpl *)
-  apply idpath.
-Qed.
 
 Lemma nat_assoc_step : (∏ n m k, (nat_plus n (nat_plus m k) = nat_plus (nat_plus n m) k) -> (nat_plus (S n) (nat_plus m k) = nat_plus (nat_plus (S n) m) k)).
   intros.
@@ -178,27 +210,72 @@ Proof.
          n).
 Qed.
 
+Lemma nat_plus_is_comm_base : ∏ m: nat, nat_plus 0 m = nat_plus m 0.
+Proof.
+  intros.
+  cbn.
+  rewrite nat_zero_plus.
+  apply idpath.
+Defined.
+
+Lemma nat_plus_succ_right : ∏ n m: nat, nat_plus m (S n) = S (nat_plus m n).
+Proof.
+  intros.
+  induction m.
+  cbn.
+  apply idpath.
+  rewrite nat_plus_succ.
+  apply maponpaths.
+  rewrite nat_plus_succ.
+  assumption.
+Qed.
+
+Lemma nat_plus_is_comm_step : ∏ m n: nat, nat_plus n m = nat_plus m n -> nat_plus (S n) m = nat_plus m (S n).
+Proof.
+  intros.
+  rewrite nat_plus_succ_right.
+  rewrite nat_plus_succ.
+  apply maponpaths.
+  assumption.
+Qed.
+
 Theorem nat_plus_is_comm : exercise_2_2_comm.
 Proof.
-  exact fill_me.
+  exact (λ n m,
+         (nat_rect (λ n, nat_plus n m = nat_plus m n)
+                   (nat_plus_is_comm_base m)
+                   (nat_plus_is_comm_step m)) n
+        ).
 Qed.
 
 (** Exercise 3. Write down the following types:
 
     1. even natural numbers *)
 
-Definition exercise_3_1 : UU := fill_me.
+Definition exercise_3_1 : UU := ∑ (n:nat), (∑ (k:nat), n = nat_plus k k).
 
 (** 2. prime numbers *)
 
-Definition nat_mult : nat → nat → nat := fill_me.
+Check nat_rect.
 
-Definition exercise_3_2 : UU := fill_me.
+Definition nat_mult : nat → nat → nat :=
+  λ n, nat_rect (λ _, nat) 0 (λ _ almost, nat_plus n almost).
+
+(* Definition exercise_3_2 : UU :=
+  ∑ (n : nat), (∏ (d1 d2 : nat), (n = nat_mult d1 d2) -> ((d1 = 1) ‌⨿ (d2 = 1))).
+ *)
+
+Print coprod.
+
+Definition exercise_3_2 : UU :=
+  ∑ (n : nat), ((n = 1) -> empty) × (∏ (d1 d2: nat), (n = nat_mult d1 d2) -> ((d1 = 1) ⨿ (d2 = 1))).
+
 
 (** 3. functions A → nat which attain zero *)
 
-Definition exercise_3_3 (A : UU) : UU := fill_me.
+Definition exercise_3_3 (A : UU) : UU :=
+  ∑ (f: A -> nat), (∑ (a:A), f a = 0).
 
 (** 4. the "less than" relation on natural numbers *)
 
-Definition exercise_3_4 (n m : nat) : UU := fill_me.
+Definition exercise_3_4 (n m : nat) : UU := (∑ (k:nat), (S (nat_plus n k)) = m).
