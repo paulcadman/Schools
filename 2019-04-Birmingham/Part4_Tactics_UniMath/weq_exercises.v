@@ -24,22 +24,66 @@ End weqdef.
 
 (** Prove that the identity function is an equivalence *)
 Lemma idisweq (X : UU) : isweq (idfun X).
-Abort.
+  unfold isweq.
+  intro y.
+  unfold iscontr.
+  unfold hfiber.
+  use tpair.
+  - exists y.
+    apply idpath.
+  - cbn.
+    intro t.
+    induction t as [x H].
+    unfold idfun in H.
+    rewrite H.
+    apply idpath.
+Defined.
 
+Check idfun.
 (** Package this up as an equivalence *)
 Definition idweq (X : UU) : X ≃ X.
-Abort.
+  unfold weq.
+  exists (idfun X).
+  apply idisweq.
+Defined.
 
+Check isweq_iso.
 (** consider finding an alternative proof with [isweq_iso] that is extremely useful in the UniMath library *)
+
+Lemma idisweq_alt (X : UU) : isweq (idfun X).
+Proof.
+  use isweq_iso.
+  - exact (idfun X).
+  - intro.
+    apply idpath.
+  - intro.
+    apply idpath.
+Defined.
 
 
 (** Prove that any map to empty is an equivalence *)
 Lemma isweqtoempty {X : UU} (f : X -> ∅) : isweq f.
-Abort.
+  unfold isweq.
+  intro.
+  unfold iscontr.
+  unfold hfiber.
+  use tpair.
+  - induction y.
+  - cbn.
+    intro.
+    induction y.
+Defined.
+
 
 (** Package this up as an equivalence *)
 Definition weqtoempty {X : UU} (f : X -> ∅) : X ≃ ∅.
-Abort.
+unfold weq.
+use tpair.
+- exact f.
+- cbn.
+  exact (isweqtoempty f).
+Defined.
+
 
 (** Prove that the composition of equivalences is an equivalence.
 
@@ -50,8 +94,15 @@ and [total2_paths2_f] that is an introduction rule allowing to establish an
 equation between pairs. There, transport arises, but transport along the
 identity path is always the identity, and this already computationally, which
 means that [cbn] gets rid of it. *)
+
+Check base_paths.
+Check fiber_paths.
+Check total2_paths2_f.
+
 Theorem compisweq {X Y Z : UU} (f : X -> Y) (g : Y -> Z)
         (isf : isweq f) (isg : isweq g) : isweq (g ∘ f).
+
+
 Abort.
 
 (** Package this up as an equivalence *)

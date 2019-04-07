@@ -91,3 +91,89 @@ Proof.
   induction p_zw.
   apply idpath.
 Defined.
+
+Search (transportf).
+Check transportf.
+
+(*
+transportf
+     : ∏ (P : ?X → UU) (x x' : ?X),
+       x = x' → P x → P x'
+where
+?X : [ |- UU]
+ *)
+
+Lemma transport (X : UU) : ∏ (A : X -> UU), (∏ (x y: X), x = y -> A x = A y).
+Proof.
+  intros ? ? ? H.
+  induction H.
+  apply idpath.
+Defined.
+
+Check funextfun.
+Check isaprop.
+About isaprop.
+
+Definition geq (X: UU) : X -> (unit -> X).
+  intro x.
+  exact (λ _, x).
+Defined.
+
+Definition feq (X: UU) : (X -> unit) := λ _, tt.
+
+Definition isProp (X : UU) := ∏ (x y: X), x = y.
+
+Print iscontr.
+Lemma inhabited_prop_iscontr (X : UU) : isProp X -> X -> iscontr X.
+Proof.
+  intros P x.
+  unfold iscontr.
+  use tpair.
+  - exact x.
+  - cbn.
+    intro y.
+    unfold isProp in P.
+    exact (P y x).
+Defined.
+
+Lemma inhabited_prop_weq_unit (X : UU) : isProp X -> X -> X ≃ unit.
+Proof.
+  intros P x.
+  Search (iscontr).
+  exact (weqcontrtounit (inhabited_prop_iscontr X P x)).
+Defined.
+
+Print funextfunStatement.
+
+Locate "~".
+Print homot.
+
+Search (_ ≃ unit).
+
+Check iscontr.
+Print iscontr.
+
+(*
+gradth
+     : ∏ (f : ?X → ?Y) (g : ?Y → ?X),
+       (∏ x : ?X, g (f x) = x)
+       → (∏ y : ?Y, f (g y) = y) → isweq f *)
+Check gradth.
+
+
+Lemma all_same_prop_eq (X : UU) : ∏ (f g : isProp X), ∏ (x y: X), (f x y) = (g x y).
+Proof.
+  intros.
+  (* set (all_at_x := inhabited_prop_iscontr X f x).
+  unfold iscontr in all_at_x. *)
+  rewrite f.
+  set (gyy := (g y y)).
+
+
+
+
+
+
+
+
+Proof.

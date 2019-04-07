@@ -22,16 +22,20 @@ Definition setproperty (X : hSet) := pr2 X.
 Definition bool_to_type : bool -> UU
   := bool_rect (λ _ : bool, UU) unit empty.
 
+
+Check transportf.
 (** Show that there is no path from [true] to [false]. *)
 Theorem no_path_from_true_to_false : true != false.
 Proof.
-  apply fill_me.
+  intro X.
+  apply (transportf bool_to_type X tt).
 Defined.
 
 (** Show that there is no path from [false] to [true]. *)
 Theorem no_path_from_false_to_true : false != true.
 Proof.
-  apply fill_me.
+  intro X.
+  apply (transportb bool_to_type X tt).
 Defined.
 
 (** Construct decidable equality on [bool]. *)
@@ -40,19 +44,195 @@ Proof.
   unfold isdeceq. intros x' x. induction x.
   - induction x'.
     + unfold decidable.
-      apply fill_me.
-    + apply fill_me.
+      apply ii1.
+      apply idpath.
+    + unfold decidable.
+      apply ii2.
+      exact no_path_from_false_to_true.
   - induction x'.
-    + apply fill_me.
-    + apply fill_me.
+    + unfold decidable.
+      apply ii2.
+      exact no_path_from_true_to_false.
+    + unfold decidable.
+      apply ii1.
+      apply idpath.
+Defined.
+
+Print decidable.
+
+Search isaprop.
+Print hProp.
+
+Check gradth.
+Check iscontrifweqtounit.
+
+Definition to_unit : (true = true) -> unit.
+  intros tpath.
+  induction tpath.
+  exact tt.
+Defined.
+
+Print to_unit.
+(*
+pathsinv0l:
+  ∏ (X : UU) (a b : X) (e : a = b), ! e @ e = idpath b
+pathsinv0r:
+  ∏ (X : UU) (a b : X) (e : a = b), e @ ! e = idpath a
+ *)
+
+Check pathsinv0l.
+
+Print isdeceqbool.
+
+Definition to_true_eq : unit -> (true = true).
+  intros u.
+  exact (idpath true).
+Defined.
+
+Search bool.
+
+Check transportf.
+
+Definition code : bool -> bool -> UU.
+  intros a b.
+  induction a.
+  - induction b.
+    + exact unit.
+    + exact empty.
+  - induction b.
+    + exact empty.
+    + exact unit.
+Defined.
+
+Definition r : ∏ (x : bool), code x x.
+  intro x.
+  induction x.
+  - exact tt.
+  - exact tt.
+Defined.
+
+Check transportf.
+     (* : ∏ (P : ?X → UU) (x x' : ?X), x = x' → P x → P x' *)
+Definition encode : ∏ (m n: bool), (m = n) -> code m n.
+  intros.
+  exact (transportf (code m) X (r m)).
+Defined.
+
+Definition decode : ∏ (m n: bool), code m n -> (m = n).
+  intros.
+  induction m.
+  - induction n.
+    + exact (idpath true).
+    + cbn in X.
+      induction X.
+  - induction n.
+    + cbn in X.
+      induction X.
+    + exact (idpath false).
 Defined.
 
 Check isasetifdeceq.
 
+Lemma encode_inv : ∏ (m n: bool), (∏ (x: (m = n)), decode m n (encode m n x) = x).
+Proof.
+  intros.
+  induction x.
+  unfold encode.
+  cbn.
+  induction m.
+  - unfold decode.
+    unfold idfun.
+    unfold r.
+    cbn.
+    exact (idpath (idpath true)).
+  - exact (idpath (idpath false)).
+Defined.
+
+Lemma decode_inv : ∏ (m n: bool), (∏ (x: code m n), encode m n (decode m n x) = x).
+Proof.
+  intros.
+  induction m.
+  - induction n.
+    + rewrite x.
+      exact (idpath tt).
+    + cbn in x.
+      induction x.
+  - induction n.
+    + induction x.
+    + rewrite x.
+      exact (idpath tt).
+Defined.
+
+
+Check weq_iso.
+(* weq_iso
+     : ∏ (f : ?X → ?Y) (g : ?Y → ?X),
+       (∏ x : ?X, g (f x) = x)
+        → (∏ y : ?Y, f (g y) = y) → ?X ≃ ?Y *)
+Lemma eqiv_bool : ∏ (m n: bool), (m = n) ≃ code m n.
+  intros.
+  apply (weq_iso (encode m n) (decode m n) (encode_inv m n) (decode_inv m n)).
+Defined.
+
+Lemma to_unit_eqiv : ∏ x : (true = true), (to_true_eq (to_unit x)) = x.
+Proof.
+  intro y.
+  unfold to_unit.
+  unfold to_true_eq.
+Abort.
+
+Locate "≃".
+Search (weq _ _ -> _).
+
+(*isofhlevelweqb:
+  ∏ (n : nat) (X Y : UU),
+  X ≃ Y → isofhlevel n Y → isofhlevel n X
+isofhlevelweqf:
+  ∏ (n : nat) (X Y : UU),
+  X ≃ Y → isofhlevel n X → isofhlevel n Y
+ *)
+
+Theorem prop_inv_equivalence (X Y : UU) : Y ≃ X -> isaprop X -> isaprop Y.
+  intros x_eq_y Hx.
+  unfold isaprop in Hx.
+  apply (isofhlevelweqb 1 x_eq_y) in Hx.
+  unfold isaprop.
+  exact Hx.
+Defined.
+
+Lemma isweq_true_eq_true : (true = true) ≃ unit.
+Proof.
+Abort.
+
+Search (isaprop unit).
 Theorem isaset_bool : isaset bool.
 Proof.
-  apply fill_me.
+  unfold isaset.
+  intros x y.
+  induction x.
+  - induction y.
+    + set (eqiv_true := eqiv_bool true true).
+      unfold code in eqiv_true.
+      cbn in eqiv_true.
+      exact (prop_inv_equivalence unit (true=true) (eqiv_true) isapropunit).
+    + set (eqiv_false_true := eqiv_bool true false).
+      unfold code in eqiv_false_true.
+      cbn in eqiv_false_true.
+      exact (prop_inv_equivalence empty (true=false) eqiv_false_true isapropempty).
+  - induction y.
+    + set (eqiv_false_true := eqiv_bool false true).
+      unfold code in eqiv_false_true.
+      cbn in eqiv_false_true.
+      exact (prop_inv_equivalence empty (false=true) eqiv_false_true isapropempty).
+    + set (eqiv_false := eqiv_bool false false).
+      unfold code in eqiv_false.
+      cbn in eqiv_false.
+      exact (prop_inv_equivalence unit (false=false) (eqiv_false) isapropunit).
 Defined.
+  (* Search (isaset). *)
+  (* Check isasetifdeceq. *)
+  (* exact (isasetifdeceq bool isdeceqbool). *)
+(* Defined. *)
 
 (** * [nat] is a set *)
 
@@ -63,14 +243,21 @@ Defined.
 Definition nat_to_type : nat -> UU
   := nat_rect _ unit (fun _ _ => empty).
 
+Print isasetifdeceq.
+Print isaproppathsfromisolated.
+
+Check transportf.
+
 Lemma no_path_from_zero_to_successor (x : nat) : 0 != S x.
 Proof.
-  apply fill_me.
+  intro X.
+  apply (transportf nat_to_type X tt).
 Defined.
 
 Lemma no_path_from_successor_to_zero (x : nat) : S x != 0.
 Proof.
-  apply fill_me.
+  intro X.
+  apply (transportb nat_to_type X tt).
 Defined.
 
 (** Define a predecessor function on [nat]:
@@ -80,17 +267,22 @@ Defined.
 Definition predecessor : nat -> nat
   := nat_rect _ 0 (fun m (r : nat) => m).
 
+Check maponpaths.
+
 Lemma invmaponpathsS (n m : nat) : S n = S m -> n = m.
 Proof.
-  apply fill_me.
+  intro X.
+  exact (maponpaths predecessor X).
 Defined.
 
 (** The following constant will be useful for the next lemma. *)
 Check @negf.
+     (* : ∏ X Y : UU, (X → Y) → ¬ Y → ¬ X *)
 
 Lemma noeqinjS (x x' : nat) : x != x' -> S x != S x'.
 Proof.
-  apply fill_me.
+  intro X.
+  induction X.
 Defined.
 
 Theorem isdeceqnat : isdeceq nat.
